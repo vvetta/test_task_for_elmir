@@ -2,7 +2,7 @@ import uvicorn
 
 from fastapi import FastAPI
 
-from api.secrets import secrets
+from api.rsecrets import secrets
 
 
 app = FastAPI()
