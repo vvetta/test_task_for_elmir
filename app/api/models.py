@@ -9,6 +9,7 @@ class Secret(BaseModel):
     secret_key = mapped_column(String(), nullable=False, unique=True)
     passphrase = mapped_column(String(length=255), nullable=True, unique=False)
     ttl_seconds = mapped_column(Integer(), nullable=True)
+    num_of_readings = mapped_column(Integer(), nullable=False, default=0)
 
 
 class ServerLog(BaseModel):
