@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_session
@@ -10,22 +10,22 @@ secrets = APIRouter(tags=["Secrets"], prefix="/secret")
 
 
 @secrets.post('', response_model=SecretKeyMessage)
-async def create_secret(secret_payload: CreateSecretSchema,
+async def create_secret(secret_payload: CreateSecretSchema, request: Request,
                         session: AsyncSession = Depends(get_session)) -> SecretKeyMessage:
-    secret_key = await add_secret_to_db(secret_payload, session)
+    secret_key = await add_secret_to_db(secret_payload, session, request)
     return secret_key
 
 
 @secrets.get('/{secret_key}', response_model=BaseSecretSchema)
-async def get_secret(secret_key: str,
+async def get_secret(secret_key: str, passphrase: str | None, request: Request,
                      session: AsyncSession = Depends(get_session)) -> BaseSecretSchema:
-    secret = await get_secret_from_db(secret_key, session)
+    secret = await get_secret_from_db(secret_key, session, request)
     return secret
 
 
 @secrets.delete('/{secret_key}', response_model=StatusMessage)
-async def delete_secret(secret_key: str,
+async def delete_secret(secret_key: str, passphrase: str | None, request: Request,
                         session: AsyncSession = Depends(get_session)) -> StatusMessage:
-    status = await delete_secret_from_db(secret_key, session)
+    status = await delete_secret_from_db(secret_key, session, request)
     return status
 

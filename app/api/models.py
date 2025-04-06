@@ -11,6 +11,12 @@ class Secret(BaseModel):
     ttl_seconds = mapped_column(Integer(), nullable=True)
     num_of_readings = mapped_column(Integer(), nullable=False, default=0)
 
+    """
+    Тут лучше реализовать "мягкое" удаление через флаг delete.
+    Таким образом будет решена проблема связей лога и секрета.
+    У меня пока будет так :D.
+    """
+
     logs = relationship("ServerLog", back_populates="secret")
 
 
@@ -18,6 +24,7 @@ class ServerLog(BaseModel):
     ip_address = mapped_column(String, nullable=False)
     message = mapped_column(String, nullable=False)
 
-    secret_id = mapped_column(Integer, ForeignKey("secret.id"))
+    secret_id = mapped_column(Integer,
+                              ForeignKey("secret.id", ondelete="SET NULL"), nullable=True)
     secret = relationship("Secret", back_populates="logs")
 
