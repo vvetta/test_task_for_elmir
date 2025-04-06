@@ -1,5 +1,7 @@
 from api import settings
 
+from typing import AsyncGenerator
+
 from sqlalchemy import Column, Integer, DateTime
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.ext.declarative import declared_attr
@@ -10,8 +12,8 @@ from sqlalchemy.sql import func
 class BaseModel(DeclarativeBase):
     __abstract__ = True
 
-    @declared_attr
-    def __tablename__(cls):
+    @declared_attr.directive
+    def __tablename__(cls) -> str:
         return cls.__name__.lower()
 
     id = Column(Integer, primary_key=True, index=True)
@@ -19,11 +21,11 @@ class BaseModel(DeclarativeBase):
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
 
 
-async_engine = create_async_engine(url=settings.DATA_BASE_URL)
-async_session = async_sessionmaker(async_engin, expire_on_commit=False)
+async_engine = create_async_engine(url=settings.DATA_BASE_URL, echo=False)
+async_session = async_sessionmaker(async_engine, expire_on_commit=False)
 
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
 
