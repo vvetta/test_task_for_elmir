@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from typing import Optional
+from pydantic import BaseModel, Field
 
 
 class BaseSecretSchema(BaseModel):
@@ -6,8 +7,16 @@ class BaseSecretSchema(BaseModel):
 
 
 class CreateSecretSchema(BaseSecretSchema):
-    passphrase: str | None
-    ttl_seconds: int | None
+    passphrase: Optional[str] = Field(
+        default=None,
+        examples=[None, "my_passphrase"],  # Примеры для документации
+        description="Опциональная кодовая фраза"
+    )
+    ttl_seconds: Optional[int] = Field(
+        default=None,
+        examples=[None, 3600],
+        description="Время жизни секрета в секундах"
+    )
 
 
 class SecretKeyMessage(BaseModel):

@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,15 +18,17 @@ async def create_secret(secret_payload: CreateSecretSchema, request: Request,
 
 
 @secrets.get('/{secret_key}', response_model=BaseSecretSchema)
-async def get_secret(secret_key: str, passphrase: str | None, request: Request,
-                     session: AsyncSession = Depends(get_session)) -> BaseSecretSchema:
-    secret = await get_secret_from_db(secret_key, session, request)
+async def get_secret(secret_key: str, request: Request,
+                     session: AsyncSession = Depends(get_session),
+                     passphrase: Optional[str] = None) -> BaseSecretSchema:
+    secret = await get_secret_from_db(secret_key, session, request, passphrase)
     return secret
 
 
 @secrets.delete('/{secret_key}', response_model=StatusMessage)
-async def delete_secret(secret_key: str, passphrase: str | None, request: Request,
-                        session: AsyncSession = Depends(get_session)) -> StatusMessage:
-    status = await delete_secret_from_db(secret_key, session, request)
+async def delete_secret(secret_key: str, request: Request,
+                        session: AsyncSession = Depends(get_session),
+                        passphrase: Optional[str] = None) -> StatusMessage:
+    status = await delete_secret_from_db(secret_key, session, request, passphrase)
     return status
 

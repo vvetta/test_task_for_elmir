@@ -31,6 +31,8 @@ async def add_secret_to_db(secret_payload: CreateSecretSchema,
     new_secret = Secret(**new_secret_payload, secret_key=secret_key)
     session.add(new_secret)
 
+    logger.info(new_secret.passphrase)
+
     try:
         await session.commit()
         logger.info("Секрет успешно создан!")
@@ -47,19 +49,21 @@ async def add_secret_to_db(secret_payload: CreateSecretSchema,
 
 
 async def get_secret_from_db(secret_key: str, session: AsyncSession,
-                             request: Request, passphrase: str | None = None) -> BaseSecretSchema:
+                             request: Request, passphrase: str | None) -> BaseSecretSchema:
     secret = await session.execute(select(Secret).where(Secret.secret_key == secret_key))
     secret = secret.fetchone()
 
     if not secret:
         raise HTTPException(status_code=404, detail="Secret not Found")
 
+    logger.info(passphrase)
+
     if secret[0].passphrase and secret[0].passphrase != passphrase:
         raise HTTPException(status_code=401, detail="Access denied!")
 
     expire_flag = False
 
-    if secret[0].ttl_seconds != 0:
+    if secret[0].ttl_seconds and secret[0].ttl_seconds != 0:
         secret_time_created = datetime.fromisoformat(str(secret[0].time_created))
         expire_time = secret_time_created + timedelta(seconds=secret[0].ttl_seconds)
         now = datetime.now(timezone.utc)
