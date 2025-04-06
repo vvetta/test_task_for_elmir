@@ -1,5 +1,5 @@
-from sqlalchemy import String, Boolean, Integer, LargeBinary
-from sqlalchemy.orm import mapped_column
+from sqlalchemy import String, Boolean, Integer, LargeBinary, ForeignKey
+from sqlalchemy.orm import mapped_column, relationship
 
 from api.database import BaseModel
 
@@ -11,6 +11,13 @@ class Secret(BaseModel):
     ttl_seconds = mapped_column(Integer(), nullable=True)
     num_of_readings = mapped_column(Integer(), nullable=False, default=0)
 
+    logs = relationship("ServerLog", back_populates="secret")
+
 
 class ServerLog(BaseModel):
-    pass
+    ip_address = mapped_column(String, nullable=False)
+    message = mapped_column(String, nullable=False)
+
+    secret_id = mapped_column(Integer, ForeignKey("secret.id"))
+    secret = relationship("Secret", back_populates="logs")
+
