@@ -2,7 +2,7 @@ import uuid
 
 from typing import Sequence
 from fastapi import HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import select, delete, text, func,  Interval
 from sqlalchemy.ext.asyncio import AsyncSession
 from cryptography.fernet import Fernet
 from datetime import datetime, timedelta, timezone
@@ -23,6 +23,7 @@ else:
 
 async def add_secret_to_db(secret_payload: CreateSecretSchema,
                            session: AsyncSession, request: Request) -> SecretKeyMessage:
+
     new_secret_payload = secret_payload.model_dump()
     new_secret_payload["secret"] = cipher.encrypt(new_secret_payload["secret"].encode())
 
@@ -50,6 +51,10 @@ async def add_secret_to_db(secret_payload: CreateSecretSchema,
 
 async def get_secret_from_db(secret_key: str, session: AsyncSession,
                              request: Request, passphrase: str | None) -> BaseSecretSchema:
+
+    #Очистка бд
+    await delete_expired_secrets(session)
+
     secret = await session.execute(select(Secret).where(Secret.secret_key == secret_key))
     secret = secret.fetchone()
 
@@ -140,4 +145,16 @@ async def read_server_logs(session: AsyncSession) -> Sequence[ServerLog]:
     logs = logs.scalars().all()
 
     return logs
+
+
+async def delete_expired_secrets(session: AsyncSession):
+    now = datetime.utcnow()
+
+    stmt = text("""
+        DELETE FROM secret
+        WHERE time_created + (ttl_seconds * interval '1 second') < :now
+    """).bindparams(now=now)
+
+    await session.execute(stmt)
+    await session.commit()
 
